@@ -1,0 +1,18 @@
+{
+	"compilerOptions": {
+		"target": "es2022",
+		"module": "esnext",
+		"moduleResolution": "bundler",
+		"strict": true,
+		"declaration": true,
+		"lib": [
+			"ES2022"
+		],
+		"rootDir": ".",
+		"outDir": "./dist/module",
+		"declarationDir": "./dist/types",
+	},
+	"include": [
+		"./src"
+	]
+}

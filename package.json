@@ -1,0 +1,14 @@
+{
+  "name": "speakirpg-calculator-repo",
+  "private": "true",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "test": "pnpm --filter=speakirpg-calculator run test",
+    "build": "pnpm --filter=speakirpg-calculator run build"
+  },
+  "author": "Take-John <takejohn@takejohn.jp>",
+  "license": "MIT"
+}

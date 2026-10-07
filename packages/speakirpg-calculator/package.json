@@ -1,0 +1,25 @@
+{
+  "name": "speakirpg-calculator",
+  "version": "0.1.0",
+  "description": "Calculators related to Speaki RPG",
+  "author": "Take-John <takejohn@takejohn.jp>",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/module/index.js"
+    }
+  },
+  "files": [
+    "./dist"
+  ],
+  "scripts": {
+    "test": "vitest --run",
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.3"
+  }
+}
