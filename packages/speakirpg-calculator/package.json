@@ -9,6 +9,10 @@
     ".": {
       "types": "./dist/types/index.d.ts",
       "import": "./dist/module/index.js"
+    },
+    "./gear-enhancement": {
+      "types": "./dist/types/gear-enhancement/index.d.ts",
+      "import": "./dist/module/gear-enhancement/index.js"
     }
   },
   "files": [
