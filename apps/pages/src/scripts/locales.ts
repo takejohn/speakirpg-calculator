@@ -1,0 +1,16 @@
+import type { GetStaticPaths } from 'astro';
+import { ja } from '@/locales/ja.ts';
+
+export type Locale = typeof LOCALES[number];
+
+export type TranslateKey = keyof typeof ja;
+
+export type Messages = Record<TranslateKey, string>;
+
+export const LOCALES = ['ja', 'en', 'kr'] as const;
+
+export const DEFAULT_LOCALE = 'ja' satisfies Locale;
+
+export const getStaticPaths = (() => 
+	LOCALES.map((locale) => ({ params: { locale } }))
+) satisfies GetStaticPaths;

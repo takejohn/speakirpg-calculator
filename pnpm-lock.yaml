@@ -13,6 +13,9 @@ importers:
       astro:
         specifier: ^7.3.8
         version: 7.3.8(yaml@2.9.1)
+      water.css:
+        specifier: ^2.1.1
+        version: 2.1.1
 
   packages/speakirpg-calculator:
     devDependencies:
@@ -1399,6 +1402,9 @@ packages:
       jsdom:
         optional: true
 
+  water.css@2.1.1:
+    resolution: {integrity: sha512-gkO5byC+pZ7ndEV18hs/RmxKoDtEZXx06tZU4ocI3IBdv4xV64tlhjIFbDjurysRnNkiy2oQTr8PakRyzZWPJw==}
+
   why-is-node-running@3.2.1:
     resolution: {integrity: sha512-Tb2FUhB4vUsGQlfSquQLYkApkuPAFQXGFzxWKHHumVz2dK+X1RUm/HnID4+TfIGYJ1kTcwOaCk/buYCEJr6YjQ==}
     engines: {node: '>=20.11'}
@@ -2664,6 +2670,8 @@ snapshots:
       why-is-node-running: 3.2.1
     transitivePeerDependencies:
       - msw
+
+  water.css@2.1.1: {}
 
   why-is-node-running@3.2.1: {}
 

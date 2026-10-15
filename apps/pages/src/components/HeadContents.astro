@@ -1,0 +1,38 @@
+---
+import 'water.css';
+import { getAbsoluteLocaleUrl } from 'astro:i18n';
+import { LOCALES, type Locale } from '@/scripts/locales.js';
+
+interface Props {
+	title: string;
+}
+
+function getCurrentPathWithoutLocalePrefix(): string | null {
+	const currentLocale = Astro.currentLocale as Locale | undefined;
+	if (currentLocale == null) {
+		return null;
+	}
+	const prefix = `${import.meta.env.BASE_URL}/${currentLocale}`;
+	const pathname = Astro.url.pathname;
+	if (!pathname.startsWith(prefix)) {
+		return null;
+	}
+	return pathname.slice(prefix.length);
+}
+
+const currentPathWithoutLocalePrefix = getCurrentPathWithoutLocalePrefix();
+---
+
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width" />
+{
+	currentPathWithoutLocalePrefix != null && LOCALES.map((locale) => <link
+		rel="alternate"
+		hreflang={locale}
+		href={getAbsoluteLocaleUrl(locale, currentPathWithoutLocalePrefix)}
+	/>)
+}
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" />
+<meta name="generator" content={Astro.generator} />
+<title>{Astro.props.title}</title>

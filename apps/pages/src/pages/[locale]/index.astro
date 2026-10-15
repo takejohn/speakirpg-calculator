@@ -1,0 +1,15 @@
+---
+import Layout from '@/layouts/Layout.astro';
+import { useMessages } from '@/scripts/translate.js';
+import type { InferGetStaticParamsType } from 'astro';
+import { getStaticPaths } from '@/scripts/locales.js';
+
+export { getStaticPaths };
+type Params = InferGetStaticParamsType<typeof getStaticPaths>;
+
+const $t = useMessages(Astro.params.locale);
+---
+
+<Layout title={$t('appName')}>
+	<h1>{$t('appName')}</h1>
+</Layout>
