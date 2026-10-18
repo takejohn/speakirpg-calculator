@@ -4,7 +4,7 @@ import Header from '@/components/Header.astro';
 import Footer from '@/components/Footer.astro';
 import { useMessages } from '@/scripts/translate.js';
 import { getStaticPaths, type Locale } from '@/scripts/locales.js';
-import type { PageMessages } from './types.js';
+import type { PageMessages } from '@/scripts/gear-enhancement/types.js';
 
 export { getStaticPaths };
 
@@ -98,8 +98,8 @@ const messages: PageMessages = {
 <script>
 import { type GearType, getUnitGold } from 'speakirpg-calculator/gear-enhancement';
 import { Chart } from 'chart.js/auto';
-import CalculationWorker from './worker.ts?worker';
-import type { SimulationParams, ResultPoint, PageMessages } from './types.js';
+import CalculationWorker from '@/scripts/gear-enhancement/worker.ts?worker';
+import type { SimulationParams, ResultPoint, PageMessages } from '@/scripts/gear-enhancement/types.js';
 
 export type FormParams = {
 	levelFrom: number;
