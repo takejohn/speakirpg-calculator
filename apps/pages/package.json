@@ -13,6 +13,8 @@
 	},
 	"dependencies": {
 		"astro": "^7.3.8",
+		"chart.js": "^4.5.1",
+		"speakirpg-calculator": "workspace:*",
 		"water.css": "^2.1.1"
 	}
 }

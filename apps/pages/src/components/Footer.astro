@@ -1,0 +1,18 @@
+---
+import { useMessages } from '@/scripts/translate.js';
+import type { Locale } from '@/scripts/locales.js';
+
+const $t = useMessages(Astro.currentLocale as Locale);
+---
+
+<footer>
+	<a href="https://github.com/takejohn/speakirpg-calculator">{$t('source')}</a>
+	{' | '}
+	<a href="https://speakirpg.overture.io.kr/">{$t('speakirpg')}</a>
+</footer>
+
+<style>
+footer {
+	text-align: center;
+}
+</style>

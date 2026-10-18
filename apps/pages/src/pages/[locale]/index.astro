@@ -1,15 +1,21 @@
 ---
 import Layout from '@/layouts/Layout.astro';
 import { useMessages } from '@/scripts/translate.js';
-import type { InferGetStaticParamsType } from 'astro';
-import { getStaticPaths } from '@/scripts/locales.js';
+import { getStaticPaths, type Locale } from '@/scripts/locales.js';
+import { getRelativeLocaleUrl } from 'astro:i18n';
 
 export { getStaticPaths };
-type Params = InferGetStaticParamsType<typeof getStaticPaths>;
 
-const $t = useMessages(Astro.params.locale);
+const $t = useMessages(Astro.currentLocale as Locale);
 ---
 
-<Layout title={$t('appName')}>
-	<h1>{$t('appName')}</h1>
+<Layout title={$t('$app')}>
+	<h1>{$t('$app')}</h1>
+	<ul>
+		<li>
+			<a href={getRelativeLocaleUrl(Astro.currentLocale!, '/gear-enhancement')}>
+				{$t('gearEnhancement')}
+			</a>
+		</li>
+	</ul>
 </Layout>

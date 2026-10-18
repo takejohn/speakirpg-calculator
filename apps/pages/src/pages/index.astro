@@ -1,0 +1,17 @@
+---
+import Layout from '@/layouts/Layout.astro';
+import { LOCALES } from '@/scripts/locales';
+import { useMessages } from '@/scripts/translate';
+import { getRelativeLocaleUrl } from 'astro:i18n';
+---
+
+<Layout lang="en" title="Speaki RPG Calculator">
+	<p>Select your language</p>
+	<ul>
+		{
+			LOCALES.map((locale) => <li>
+				<a href={getRelativeLocaleUrl(locale)}>{useMessages(locale)('$language')}</a>
+			</li>)
+		}
+	</ul>
+</Layout>

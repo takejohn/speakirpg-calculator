@@ -1,4 +1,4 @@
-import { LOCALES, type Locale, type TranslateKey } from './locales.js';
+import { DEFAULT_LOCALE, LOCALES, type Locale, type Messages, type TranslateKey } from './locales.js';
 
 import { ja } from '@/locales/ja.js';
 import { en } from '@/locales/en.js';
@@ -11,8 +11,14 @@ const messages = {
 };
 
 export function useMessages(locale: Locale): (key: TranslateKey) => string {
+	if (!LOCALES.includes(locale)) {
+		const expectedLocalesString = LOCALES.map((locale) => `"${locale}"`).join(', ');
+		throw new TypeError(`Unknown locale: "${locale}" (${expectedLocalesString})`);
+	}
+	const localeMessages: Partial<Messages> = messages[locale];
+	const defaultLocaleMessages: Messages = messages[DEFAULT_LOCALE];
 	return function $t(key: TranslateKey): string {
-		const message = messages[locale][key];
+		const message = localeMessages[key] ?? defaultLocaleMessages[key];
 		return message;
 	}
 }

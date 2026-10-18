@@ -3,9 +3,9 @@ import { ja } from '@/locales/ja.ts';
 
 export type Locale = typeof LOCALES[number];
 
-export type TranslateKey = keyof typeof ja;
+export type TranslateKey = keyof Messages;
 
-export type Messages = Record<TranslateKey, string>;
+export type Messages = typeof ja;
 
 export const LOCALES = ['ja', 'en', 'kr'] as const;
 

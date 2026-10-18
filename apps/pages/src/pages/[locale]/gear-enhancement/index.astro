@@ -1,0 +1,278 @@
+---
+import Layout from '@/layouts/Layout.astro';
+import Header from '@/components/Header.astro';
+import Footer from '@/components/Footer.astro';
+import { useMessages } from '@/scripts/translate.js';
+import { getStaticPaths, type Locale } from '@/scripts/locales.js';
+import type { PageMessages } from './types.js';
+
+export { getStaticPaths };
+
+const $t = useMessages(Astro.currentLocale as Locale);
+
+const messages: PageMessages = {
+  spentGold: $t('spentGold'),
+  reachingProbability: $t('reachingProbability'),
+  calculating: $t('calculating'),
+  calculationCompleted: $t('calculationCompleted'),
+  errorInvalidLevel: $t('errorInvalidLevel'),
+  errorGoldNegativeOrNotInteger: $t('errorGoldNegativeOrNotInteger'),
+  errorTargetLevelNotMoreThanStart: $t('errorTargetLevelNotMoreThanStart'),
+};
+---
+
+<Layout title={`${$t('gearEnhancement')} | ${$t('$app')}`}>
+	<Header>{$t('gearEnhancement')}</Header>
+
+	<main id="main" data-messages={JSON.stringify(messages)}>
+		<section>
+			<h2>{$t('calculationSettings')}</h2>
+			<form id="form-params">
+				<div>
+					<label for="level-from">{$t('startingEnhancementLevel')}</label>
+					<input type="number" id="level-from" name="level-from" min="0" max="20" value="0" />
+				</div>
+
+				<div>
+					<label for="level-to">{$t('targetEnhancementLevel')}</label>
+					<input type="number" id="level-to" name="level-to" min="0" max="20" value="15" />
+				</div>
+
+				<div>
+					<fieldset>
+						<legend>{$t('gearType')}</legend>
+
+						<div>
+							<input type="radio" id="gear-type-weapon" name="gear-type" value="weapon" checked />
+							<label for="gear-type-weapon">{$t('weapon')}</label>
+						</div>
+
+						<div>
+							<input type="radio" id="gear-type-armor" name="gear-type" value="armor" />
+							<label for="gear-type-armor">{$t('armor')}</label>
+						</div>
+					</fieldset>
+				</div>
+
+				<div>
+					<label for="max-gold">{$t('maximumSpendingGold')}</label>
+					<input type="number" id="max-gold" name="max-gold" min="0" value="20000000" />
+				</div>
+
+				<div>
+					<button type="button" id="button-calculate">{$t('calculate')}</button>
+				</div>
+			</form>
+		</section>
+
+		<p id="p-status"></p>
+
+		<section>
+			<h2>{$t('targetLevelReachingProbability')}</h2>
+			<canvas id="cdf-chart"></canvas>
+		</section>
+
+		<section>
+			<h2>{$t('targetLevelReachingPercentiles')}</h2>
+			<table>
+				<thead>
+					<tr>
+						<th>{$t('reachingProbability')}</th>
+						<th>{$t('requiredGold')}</th>
+					</tr>
+				</thead>
+				<tbody id="tbody-percentiles">
+				</tbody>
+			</table>
+		</section>
+
+		<section>
+			<h2>{$t('aboutSpentGoldHeading')}</h2>
+			<p>{$t('aboutSpentGoldDescription')}</p>
+		</section>
+	</main>
+
+	<Footer />
+</Layout>
+
+<script>
+import { type GearType, getUnitGold } from 'speakirpg-calculator/gear-enhancement';
+import { Chart } from 'chart.js/auto';
+import CalculationWorker from './worker.ts?worker';
+import type { SimulationParams, ResultPoint, PageMessages } from './types.js';
+
+export type FormParams = {
+	levelFrom: number;
+	levelTo: number;
+	gearType: GearType;
+	maxGold: number;
+};
+
+const main = document.getElementById('main');
+const buttonCalculate = document.getElementById('button-calculate') as HTMLButtonElement;
+const formParams = document.getElementById('form-params') as HTMLFormElement;
+const cdfChart = document.getElementById('cdf-chart') as HTMLCanvasElement;
+const tbodyPercentiles = document.getElementById('tbody-percentiles') as HTMLTableSectionElement;
+const pStatus = document.getElementById('p-status') as HTMLParagraphElement;
+
+const messages: PageMessages = JSON.parse(main!.dataset.messages!);
+
+let worker: Worker | null = null;
+
+let chart: Chart | null = null;
+
+const percentiles = [50, 75, 90, 95, 99];
+
+function updateChart() {
+	const params = processParams(new FormData(formParams));
+	if (params == null) {
+		return;
+	}
+	const unitGold = getUnitGold(params.gearType)
+	const maxCost = Math.floor(params.maxGold / unitGold);
+
+	if (worker != null) {
+		worker.terminate();
+	}
+	worker = new CalculationWorker();
+
+	if (chart != null) {
+		chart.destroy();
+	}
+	chart = new Chart(
+		cdfChart,
+		{
+			type: 'line',
+			data: {
+				labels: [],
+				datasets: [{
+					pointRadius: 0,
+					data: [],
+				}],
+			},
+			options: {
+				animation: false,
+				plugins: {
+					legend: {
+						display: false,
+					},
+				},
+				scales: {
+					x: {
+						type: 'linear',
+						min: 0,
+						max: params.maxGold,
+						title: { display: true, text: messages.spentGold + ' (G)' },
+					},
+					y: {
+						min: 0,
+						max: 100,
+						title: { display: true, text: messages.reachingProbability + ' (%)' },
+					},
+				}
+			},
+		},
+	);
+
+	clearPercentileTable();
+	let reachedPercentile = Number.NEGATIVE_INFINITY;
+
+	const simulationParams: SimulationParams = {
+		levelFrom: params.levelFrom,
+		levelTo: params.levelTo,
+		maxCost,
+	};
+	worker.postMessage(simulationParams);
+	pStatus.textContent = messages.calculating;
+
+	let done = false;
+	worker.addEventListener('message', (ev) => {
+		if (chart == null) {
+			return;
+		}
+		const data: ResultPoint = ev.data;
+		done = data.done;
+		if (data.done) {
+			pStatus.textContent = messages.calculationCompleted;
+			return;
+		}
+		const { cost, probability } = data.data;
+		const gold = cost * unitGold;
+		const probabilityPercent = probability * 100;
+
+		(chart.data.labels as number[]).push(gold);
+		chart.data.datasets[0].data.push(probabilityPercent);
+
+		for (const [i, percentile] of percentiles.entries()) {
+			if (reachedPercentile >= percentile || probabilityPercent < percentile) {
+				continue;
+			}
+			reachedPercentile = percentile;
+			appendPercentileTableRow(percentile, gold);
+		}
+	});
+
+	worker.addEventListener('error', (ev) => {
+		console.error('Worker error:', ev.message, ev.filename, ev.lineno);
+	});
+
+	function animationTick() {
+		if (chart == null) {
+			return;
+		}
+		chart.update();
+		if (!done) {
+			window.requestAnimationFrame(animationTick);
+		}
+	}
+	animationTick();
+}
+
+function processParams(formData: FormData): FormParams | undefined {
+	const params = {
+		levelFrom: Number(formData.get('level-from')),
+		levelTo: Number(formData.get('level-to')),
+		gearType: formData.get('gear-type') as GearType,
+		maxGold: Number(formData.get('max-gold')),
+	}
+
+	if (params.levelFrom < 0 || params.levelTo < 0 || params.levelTo > 20 || params.levelTo > 20) {
+		window.alert(messages.errorInvalidLevel);
+		return;
+	}
+
+	if (params.maxGold < 0 || !Number.isSafeInteger(params.maxGold)) {
+		window.alert(messages.errorGoldNegativeOrNotInteger);
+		return;
+	}
+
+	if (params.levelTo <= params.levelFrom) {
+		window.alert(messages.errorTargetLevelNotMoreThanStart);
+		return;
+	}
+
+	return params;
+}
+
+function clearPercentileTable() {
+	tbodyPercentiles.innerHTML = '';
+}
+
+function appendPercentileTableRow(percentile: number, gold: number): void {
+	const row = document.createElement('tr');
+
+	const percentileCell = document.createElement('td');
+	percentileCell.textContent = `${percentile}%`;
+	row.appendChild(percentileCell);
+
+	const goldCell = document.createElement('td');
+	goldCell.textContent = `${gold.toLocaleString()}\xA0G`;
+	row.appendChild(goldCell);
+
+	tbodyPercentiles.appendChild(row);
+}
+
+buttonCalculate.addEventListener('click', () => {
+	updateChart();
+});
+</script>
